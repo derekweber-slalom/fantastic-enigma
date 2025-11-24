@@ -538,20 +538,20 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
-      <div class="social-share-buttons">
-        <button class="share-button share-twitter" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on X/Twitter">
+      <div class="social-share-buttons" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}">
+        <button class="share-button share-twitter" title="Share on X/Twitter">
           <span class="share-icon">𝕏</span>
         </button>
-        <button class="share-button share-facebook" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Facebook">
+        <button class="share-button share-facebook" title="Share on Facebook">
           <span class="share-icon">f</span>
         </button>
-        <button class="share-button share-linkedin" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on LinkedIn">
+        <button class="share-button share-linkedin" title="Share on LinkedIn">
           <span class="share-icon">in</span>
         </button>
-        <button class="share-button share-email" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share via Email">
+        <button class="share-button share-email" title="Share via Email">
           <span class="share-icon">✉</span>
         </button>
-        <button class="share-button share-copy" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Copy Link">
+        <button class="share-button share-copy" title="Copy Link">
           <span class="share-icon">🔗</span>
         </button>
       </div>
@@ -835,9 +835,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Handle social sharing
   function handleShare(event) {
     const button = event.currentTarget;
-    const activityName = button.dataset.activity;
-    const description = button.dataset.description;
-    const schedule = button.dataset.schedule;
+    const shareContainer = button.closest('.social-share-buttons');
+    const activityName = shareContainer.dataset.activity;
+    const description = shareContainer.dataset.description;
+    const schedule = shareContainer.dataset.schedule;
     
     // Build the share URL (current page URL)
     const shareUrl = window.location.href;
@@ -847,7 +848,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Determine which share button was clicked
     if (button.classList.contains('share-twitter')) {
-      // Share on X/Twitter
+      // Share on X/Twitter (using twitter.com for backward compatibility)
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
       window.open(twitterUrl, '_blank', 'width=600,height=400');
     } else if (button.classList.contains('share-facebook')) {
@@ -880,6 +881,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Fallback copy to clipboard method for older browsers
+  // Note: document.execCommand('copy') is deprecated but necessary for backward compatibility
   function fallbackCopyToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
