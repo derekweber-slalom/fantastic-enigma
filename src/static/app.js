@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Configuration
+  const SCHOOL_NAME = "Mergington High School";
+
   // DOM elements
   const activitiesList = document.getElementById("activities-list");
   const messageDiv = document.getElementById("message");
@@ -363,6 +366,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return "academic";
   }
 
+  // Helper function to escape HTML attributes to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Function to fetch activities from API with optional day and time filters
   async function fetchActivities() {
     // Show loading skeletons first
@@ -528,6 +538,23 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
+      <div class="social-share-buttons" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}">
+        <button class="share-button share-twitter" title="Share on X/Twitter">
+          <span class="share-icon">𝕏</span>
+        </button>
+        <button class="share-button share-facebook" title="Share on Facebook">
+          <span class="share-icon">f</span>
+        </button>
+        <button class="share-button share-linkedin" title="Share on LinkedIn">
+          <span class="share-icon">in</span>
+        </button>
+        <button class="share-button share-email" title="Share via Email">
+          <span class="share-icon">✉</span>
+        </button>
+        <button class="share-button share-copy" title="Copy Link">
+          <span class="share-icon">🔗</span>
+        </button>
+      </div>
       <div class="participants-list">
         <h5>Current Participants:</h5>
         <ul>
@@ -586,6 +613,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for social share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", handleShare);
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -797,6 +830,79 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     );
+  }
+
+  // Handle social sharing
+  function handleShare(event) {
+    const button = event.currentTarget;
+    const shareContainer = button.closest('.social-share-buttons');
+    const activityName = shareContainer.dataset.activity;
+    const description = shareContainer.dataset.description;
+    const schedule = shareContainer.dataset.schedule;
+    
+    // Build the share URL (current page URL)
+    const shareUrl = window.location.href;
+    
+    // Build share text
+    const shareText = `Join ${activityName} at ${SCHOOL_NAME}! ${description} - ${schedule}`;
+    
+    // Determine which share button was clicked
+    if (button.classList.contains('share-twitter')) {
+      // Share on X/Twitter (using twitter.com for backward compatibility)
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, '_blank', 'width=600,height=400');
+    } else if (button.classList.contains('share-facebook')) {
+      // Share on Facebook
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+      window.open(facebookUrl, '_blank', 'width=600,height=400');
+    } else if (button.classList.contains('share-linkedin')) {
+      // Share on LinkedIn
+      const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+      window.open(linkedinUrl, '_blank', 'width=600,height=400');
+    } else if (button.classList.contains('share-email')) {
+      // Share via Email
+      const emailSubject = `Check out ${activityName} at ${SCHOOL_NAME}`;
+      const emailBody = `${shareText}\n\nLearn more: ${shareUrl}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    } else if (button.classList.contains('share-copy')) {
+      // Copy link to clipboard with fallback for older browsers
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showMessage('Link copied to clipboard!', 'success');
+        }).catch(() => {
+          // Fallback for clipboard write failure
+          fallbackCopyToClipboard(shareUrl);
+        });
+      } else {
+        // Fallback for browsers without clipboard API
+        fallbackCopyToClipboard(shareUrl);
+      }
+    }
+  }
+
+  // Fallback copy to clipboard method for older browsers
+  // Note: document.execCommand('copy') is deprecated but necessary for backward compatibility
+  function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        showMessage('Link copied to clipboard!', 'success');
+      } else {
+        showMessage('Failed to copy link', 'error');
+      }
+    } catch (err) {
+      showMessage('Failed to copy link', 'error');
+    }
+    
+    document.body.removeChild(textArea);
   }
 
   // Show message function
